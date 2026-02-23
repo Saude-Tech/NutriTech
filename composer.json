@@ -1,0 +1,14 @@
+{
+    "name": "cesrio/nutritech",
+    "autoload": {
+        "psr-4": {
+            "Cesrio\\Nutritech\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "João Pedro, Michel, Andrey, Iago, Maju, Maria Eduarda"
+        }
+    ],
+    "require": {}
+}
