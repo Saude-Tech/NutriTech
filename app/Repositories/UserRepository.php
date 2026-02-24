@@ -2,40 +2,87 @@
 
 namespace App\Repositories;
 
-use App\Core\Database;
 use App\Models\User;
-use App\Interfaces\IUserRepository;
+use App\Services\IUserService;
+use Core\Database;
 use PDO;
 
-class UserRepository implements IUserRepository
-{
-    private $db;
+class UserRepository implements IUserService{
+    private $connection;
 
     public function __construct()
     {
-        $this-> db = new Database();
-
+        $this->connection = (new Database()) -> getConnection();
     }
 
-    public function getAll(): array
+    public function register(User $user)
     {
-        $stmt = $this->db->getConnection()->query("SELECT * FROM users");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $this->connection->prepare(
+            "INSERT INTO users (name, email, password)
+             VALUES (:name, :email, :password)"
+        );
+
+        return $stmt->execute([
+            ':name' => $user->getName(),
+            ':email' => $user->getEmail(),
+            ':password' => password_hash($user->getPassword(), PASSWORD_BCRYPT)
+        ]);
     }
 
-    public function create(User $user): User
+    public function getAllUsers()
     {
-        $stmt = $this->db->getConnection()->prepare("INSERT INTO users (name, email, password, foto, created_at) VALUES (:name, :email, :password, :foto, :created_at)");
-        $stmt->execute($user->toArray());
-        $userId = (int)$this->db->getConnection()->lastInsertId();
-        return User::fromArray(array_merge($user->toArray(), ['id' => $userId]));
+        $stmt = $this->connection->query("SELECT * FROM users");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $users = [];
+
+        foreach ($rows as $row) {
+            $users[] = new User(
+                $row['name'],
+                $row['email'],
+                $row['password'],
+                $row['id']
+            );
+        }
+
+        return $users;
     }
 
-    public function findByEmail(string $email): ?User
+    public function getUserById($id)
     {
-        $stmt = $this->db->getConnection()->prepare("SELECT * FROM users WHERE email = :email");
-        $stmt->execute(['email' => $email]);
-        $data = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $data ? User::fromArray($data) : null;
+        $stmt = $this->connection->prepare("SELECT * FROM users WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row) {
+            return null;
+        }
+
+        return new User(
+            $row['name'],
+            $row['email'],
+            $row['password'],
+            $row['id']
+        );
+    }
+
+    public function getUserByEmail($email)
+    {
+        $stmt = $this->connection->prepare("SELECT * FROM users WHERE email = :email");
+        $stmt->execute([':email' => $email]);
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row) {
+            return null;
+        }
+
+        return new User(
+            $row['name'],
+            $row['email'],
+            $row['password'],
+            $row['id']
+        );
     }
 }

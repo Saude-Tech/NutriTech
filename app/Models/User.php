@@ -5,50 +5,45 @@ namespace App\Models;
 class User
 {
 
-    private $id = null;
+    private $id;
     private $name;
     private $email;
     private $password;
-    private $foto = null;
-    private $createdAt = null;
+    private $created_at;
 
-
-    public function __construct($name, $email, $password)
+    public function __construct($name = '', $email = '', $password = '', $created_at = '')
     {
         $this->name = $name;
         $this->email = $email;
         $this->password = $password;
-        $this->createdAt = date('Y-m-d H:i:s');
+        $this->created_at = $created_at;
     }
 
-    public static function fromArray($data)
-    {
-        $user = new User($data['name'], $data['email'], $data['password']);
-        $user->id = $data['id'] ?? null;
-        $user->foto = $data['foto'] ?? null;
-        $user->createdAt = $data['created_at'] ?? null;
-        return $user;
-    }
-
-    public function toArray(): array
-    {
-        return get_object_vars($this);
-    }
-
-    // Getters e Setters
-
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
-    public function getEmail()
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getEmail(): string
     {
         return $this->email;
     }
 
-    public function getPassword()
+    public function getPassword(): string
     {
         return $this->password;
     }
+
+    public function getCreatedAt(): string
+    {
+        return $this->created_at;
+    }
+
+
+    
 }

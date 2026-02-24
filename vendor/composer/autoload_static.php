@@ -9,14 +9,22 @@ class ComposerStaticInit339a56290c517ef507303546204ccf7d
     public static $prefixLengthsPsr4 = array (
         'C' =>
         array (
-            'Cesrio\\Nutritech\\' => 17,
+            'Core\\' => 5,
+        ),
+        'A' =>
+        array (
+            'App\\' => 4,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'Cesrio\\Nutritech\\' =>
+        'Core\\' =>
         array (
-            0 => __DIR__ . '/../..' . '/src',
+            0 => __DIR__ . '/../..' . '/core',
+        ),
+        'App\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/app',
         ),
     );
 

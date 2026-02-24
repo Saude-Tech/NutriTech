@@ -2,41 +2,33 @@
 
 namespace App\Controllers;
 
-use App\Services\AuthService;
-use App\Exceptions\EmailAlreadyRegisteredException;
-use App\Exceptions\InvalidCredentialsException;
+use App\Repositories\UserRepository;
 
 class AuthController
 {
-    private AuthService $authService;
 
-    public function __construct(AuthService $authService)
+    public function index()
     {
-        $this->authService = $authService;
+        require_once __DIR__ . '/../Views/login.php';
     }
 
-    public function register(array $data): array
+    public function login()
     {
-        try {
-            $user = $this->authService->register(
-                $data['name'],
-                $data['email'],
-                $data['password'],
-                $data['foto'] ?? null
-            );
-            return ['success' => true, 'user' => $user];
-        } catch (EmailAlreadyRegisteredException $e) {
-            return ['success' => false, 'error' => $e->getMessage()];
+        $repository = new UserRepository();
+
+        $email = $_POST['email'];
+        $password = $_POST['password'];
+
+        $user = $repository->getUserByEmail($email);
+
+        if ($user && password_verify($password, $user->getPassword())) {
+            $_SESSION['user'] = $user->getId();
+            header('Location: /dashboard');
+            exit;
+        } else {
+            $error = "Email ou senha inválidos";
+            require '../src/Views/login.php';
         }
     }
 
-    public function login(array $data): array
-    {
-        try {
-            $user = $this->authService->login($data['email'], $data['password']);
-            return ['success' => true, 'user' => $user];
-        } catch (InvalidCredentialsException $e) {
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
-    }
 }
