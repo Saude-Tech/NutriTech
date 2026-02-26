@@ -13,19 +13,24 @@ class User
     private $createdAt = null;
 
 
-    public function __construct($name, $email, $password)
+    public function __construct($name, $email, $password, $foto = null)
     {
         $this->name = $name;
         $this->email = $email;
         $this->password = $password;
+        $this->foto = $foto;
         $this->createdAt = date('Y-m-d H:i:s');
     }
 
     public static function fromArray($data)
     {
-        $user = new User($data['name'], $data['email'], $data['password']);
+        $user = new User(
+            $data['name'],
+            $data['email'],
+            $data['password'],
+            $data['foto'] ?? null
+        );
         $user->id = $data['id'] ?? null;
-        $user->foto = $data['foto'] ?? null;
         $user->createdAt = $data['created_at'] ?? null;
         return $user;
     }
@@ -40,6 +45,16 @@ class User
     public function getId()
     {
         return $this->id;
+    }
+
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    public function getFoto()
+    {
+        return $this->foto;
     }
 
     public function getEmail()

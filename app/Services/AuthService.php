@@ -26,6 +26,16 @@ class AuthService
         return $this->userRepo->create($user);
     }
 
+    public function create(string $name, string $email, string $password, ?string $foto = null): User
+    {
+        return $this->register($name, $email, $password, $foto);
+    }
+
+    public function findByEmail(string $email): ?User
+    {
+        return $this->userRepo->findByEmail($email);
+    }
+
     public function login(string $email, string $password): User
     {
         $user = $this->userRepo->findByEmail($email);

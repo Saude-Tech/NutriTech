@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Core\Database;
+use Core\Database;
 use App\Models\User;
 use App\Interfaces\IUserRepository;
 use PDO;
@@ -13,8 +13,7 @@ class UserRepository implements IUserRepository
 
     public function __construct()
     {
-        $this-> db = new Database();
-
+        $this->db = new Database();
     }
 
     public function getAll(): array
@@ -22,13 +21,31 @@ class UserRepository implements IUserRepository
         $stmt = $this->db->getConnection()->query("SELECT * FROM users");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-
     public function create(User $user): User
     {
-        $stmt = $this->db->getConnection()->prepare("INSERT INTO users (name, email, password, foto, created_at) VALUES (:name, :email, :password, :foto, :created_at)");
-        $stmt->execute($user->toArray());
+        $stmt = $this->db->getConnection()->prepare(
+            "INSERT INTO users (name, email, password, foto, created_at)
+         VALUES (:name, :email, :password, :foto, :created_at)"
+        );
+
+        $stmt->execute([
+            'name' => $user->getName(),
+            'email' => $user->getEmail(),
+            'password' => $user->getPassword(),
+            'foto' => $user->getFoto(),
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+
         $userId = (int)$this->db->getConnection()->lastInsertId();
-        return User::fromArray(array_merge($user->toArray(), ['id' => $userId]));
+
+        return User::fromArray([
+            'id' => $userId,
+            'name' => $user->getName(),
+            'email' => $user->getEmail(),
+            'password' => $user->getPassword(),
+            'foto' => $user->getFoto(),
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
     }
 
     public function findByEmail(string $email): ?User

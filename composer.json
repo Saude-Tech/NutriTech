@@ -2,7 +2,8 @@
     "name": "cesrio/nutritech",
     "autoload": {
         "psr-4": {
-            "Cesrio\\Nutritech\\": "src/"
+            "Core\\": "core/",
+            "App\\": "app/"
         }
     },
     "authors": [

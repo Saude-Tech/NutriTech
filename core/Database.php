@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Core;
+namespace Core;
 
 use PDO;
 use PDOException;
@@ -14,6 +14,7 @@ class Database
         try {
             $this->connection = new PDO("mysql:host=localhost;dbname=nutritech", "root", "");
             $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->createTables();
         } catch (PDOException $e) {
             die("Erro de conexão com o banco de dados: " . $e->getMessage());
         }
@@ -22,5 +23,19 @@ class Database
     public function getConnection(): PDO
     {
         return $this->connection;
+    }
+
+    public function createTables(): void
+    {
+        $this->connection->exec("
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                foto VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ");
     }
 }

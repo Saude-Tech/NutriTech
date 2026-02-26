@@ -1,5 +1,7 @@
 <?php
 
+session_start();
+
 use Core\Router;
 
 require_once __DIR__ . '/../vendor/autoload.php';
