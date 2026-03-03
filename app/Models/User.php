@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use PDO;
+
 class User
 {
+    private static $pdo;
 
     private $id = null;
     private $name;
@@ -12,58 +15,160 @@ class User
     private $foto = null;
     private $createdAt = null;
 
+    // =========================
+    // Conexão
+    // =========================
+    public static function setConnection(PDO $pdo)
+    {
+        self::$pdo = $pdo;
+    }
 
+    // =========================
+    // Construtor
+    // =========================
     public function __construct($name, $email, $password, $foto = null)
     {
         $this->name = $name;
         $this->email = $email;
-        $this->password = $password;
+        $this->password = password_hash($password, PASSWORD_DEFAULT);
         $this->foto = $foto;
         $this->createdAt = date('Y-m-d H:i:s');
     }
 
-    public static function fromArray($data)
+    // =========================
+    // CREATE
+    // =========================
+    public function save()
     {
-        $user = new User(
+        if ($this->id === null) {
+            $sql = "INSERT INTO users (name, email, password, foto, created_at)
+                    VALUES (:name, :email, :password, :foto, :created_at)";
+
+            $stmt = self::$pdo->prepare($sql);
+            $stmt->execute([
+                ':name' => $this->name,
+                ':email' => $this->email,
+                ':password' => $this->password,
+                ':foto' => $this->foto,
+                ':created_at' => $this->createdAt
+            ]);
+
+            $this->id = self::$pdo->lastInsertId();
+        } else {
+            $this->update();
+        }
+
+        return $this;
+    }
+
+    // ===============
+    // READ (por email)
+    // ===============
+    public static function findByEmail(string $email) {
+        $stmt = self::$pdo->prepare("SELECT * FROM users WHERE email = :email");
+        $stmt->execute([':email' => $email]);
+
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$data) {
+            return null;
+        }
+
+        $user = new self(
             $data['name'],
             $data['email'],
             $data['password'],
-            $data['foto'] ?? null
+            $data['foto']
         );
-        $user->id = $data['id'] ?? null;
-        $user->createdAt = $data['created_at'] ?? null;
+
+        $user->id = $data['id'];
+        $user->createdAt = $data['created_at'];
+
         return $user;
     }
 
-    public function toArray(): array
+    // =========================
+    // READ (por ID)
+    // =========================
+    public static function find(int $id)
     {
-        return get_object_vars($this);
+        $stmt = self::$pdo->prepare("SELECT * FROM users WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$data) {
+            return null;
+        }
+
+        $user = new self(
+            $data['name'],
+            $data['email'],
+            $data['password'],
+            $data['foto']
+        );
+
+        $user->id = $data['id'];
+        $user->createdAt = $data['created_at'];
+
+        return $user;
     }
 
-    // Getters e Setters
-
-    public function getId()
+    // =========================
+    // READ (todos)
+    // =========================
+    public static function all()
     {
-        return $this->id;
+        $stmt = self::$pdo->query("SELECT * FROM users");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getName()
+    // =========================
+    // Verify password
+    // =========================
+    public function verifyPassword(string $password): bool
     {
-        return $this->name;
+        return password_verify($password, $this->password);
     }
 
-    public function getFoto()
+    // =========================
+    // UPDATE
+    // =========================
+    private function update()
     {
-        return $this->foto;
+        $sql = "UPDATE users 
+                SET name = :name,
+                    email = :email,
+                    foto = :foto
+                WHERE id = :id";
+
+        $stmt = self::$pdo->prepare($sql);
+
+        $stmt->execute([
+            ':name' => $this->name,
+            ':email' => $this->email,
+            ':foto' => $this->foto,
+            ':id' => $this->id
+        ]);
     }
 
-    public function getEmail()
+    // =========================
+    // DELETE
+    // =========================
+    public function delete()
     {
-        return $this->email;
+        if ($this->id === null) {
+            return false;
+        }
+
+        $stmt = self::$pdo->prepare("DELETE FROM users WHERE id = :id");
+        return $stmt->execute([':id' => $this->id]);
     }
 
-    public function getPassword()
-    {
-        return $this->password;
-    }
+    // =========================
+    // Getters
+    // =========================
+    public function getId() { return $this->id; }
+    public function getName() { return $this->name; }
+    public function getEmail() { return $this->email; }
 }
