@@ -2,21 +2,10 @@
 
 namespace App\Controllers;
 
-use App\Services\AuthService;
-use App\Repositories\UserRepository;
-use App\Exceptions\EmailAlreadyRegisteredException;
-use App\Exceptions\InvalidCredentialsException;
+use App\Models\User;
 
 class AuthController
 {
-    private AuthService $authService;
-
-    public function __construct()
-    {
-        $userRepository = new UserRepository();
-        $this->authService = new AuthService($userRepository);
-    }
-
     public function index(): void
     {
         include __DIR__ . '/../views/auth/login.php';
@@ -24,68 +13,49 @@ class AuthController
 
     public function login(): void
     {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $input = json_decode(file_get_contents('php://input'), true);
-            $data = $input ?? $_POST;
+        $email = $_POST['email'] ?? '';
+        $password = $_POST['password'] ?? '';
 
-            $email = $data['email'] ?? null;
-            $password = $data['password'] ?? null;
+        $user = User::findByEmail($email);
 
-            try {
-                $user = $this->authService->login($email, $password);
-                $_SESSION['user'] = $user;
+        if (!$user || !password_verify($password, $user->getPassword())) {
+            // ⚡ Flash message
+            $_SESSION['error'] = "Credenciais inválidas";
 
-                if (!empty($input)) {
-                    header('Content-Type: application/json');
-                    echo json_encode(['success' => true, 'user' => $user->toArray()]);
-                    exit;
-                }
-
-                header('Location: /dashboard');
-                exit;
-            } catch (InvalidCredentialsException $e) {
-                if (!empty($input)) {
-                    header('Content-Type: application/json');
-                    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
-                    exit;
-                }
-
-                $error = $e->getMessage();
-                include __DIR__ . '/../views/auth/login.php';
-            }
-        } else {
-            $this->index();
+            // Redireciona para a rota /auth
+            header('Location: /nutritech/auth');
+            exit;
         }
+
+        // Login válido
+        $_SESSION['user_id'] = $user->getId();
+        header('Location: /nutritech/dashboard');
+        exit;
     }
 
     public function register(): void
     {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $name = $_POST['name'] ?? '';
+        $email = $_POST['email'] ?? '';
+        $password = $_POST['password'] ?? '';
+        $confirmPassword = $_POST['register-confirm'] ?? '';
 
-            $name = $_POST['name'] ?? null;
-            $email = $_POST['email'] ?? null;
-            $password = $_POST['password'] ?? null;
-
-            try {
-
-                // Verificar se o email já está registrado
-                $existingUser = $this->authService->findByEmail($email);
-                if ($existingUser) {
-                    throw new EmailAlreadyRegisteredException("Email já registrado.");
-                    exit;
-                }
-
-                // Para simplificar, estamos usando o mesmo método de registro para criar usuários
-                $user = $this->authService->register($name, $email, $password);
-
-                $_SESSION['user'] = $user;
-
-                header('Location: /dashboard');
-                exit;
-            } catch (EmailAlreadyRegisteredException $e) {
-                $error = $e->getMessage();
-                include __DIR__ . '/../views/auth/login.php';
-            }
+        // Verifica se email já existe
+        if (User::findByEmail($email)) {
+            $_SESSION['error'] = "Email já registrado";
+            header('Location: /nutritech/auth');
+            exit;
         }
+
+
+
+        $user = new User($name, $email, $password);
+        $user->save();
+
+        // Login automático após registro
+        $_SESSION['user_id'] = $user->getId();
+        header('Location: /nutritech/dashboard');
+        exit;
     }
+
 }

@@ -1,10 +1,12 @@
 <?php
 
+use Core\Database;
+
+require_once '../vendor/autoload.php';
+
 session_start();
 
-use Core\Router;
+new Database(); // inicializa conexão
 
-require_once __DIR__ . '/../vendor/autoload.php';
-
-$router = new Router();
+$router = new \Core\Router();
 $router->run();

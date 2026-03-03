@@ -4,6 +4,7 @@ namespace Core;
 
 use PDO;
 use PDOException;
+use App\Models\User;
 
 class Database
 {
@@ -15,6 +16,9 @@ class Database
             $this->connection = new PDO("mysql:host=localhost;dbname=nutritech", "root", "");
             $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->createTables();
+
+            User::setConnection($this->connection);
+
         } catch (PDOException $e) {
             die("Erro de conexão com o banco de dados: " . $e->getMessage());
         }
