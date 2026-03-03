@@ -41,7 +41,7 @@
         .circle-2 {
             width: 300px;
             height: 300px;
-            bottom: -50px;
+            bottom: -050px;
             left: -50px;
             animation: float 6s ease-in-out infinite reverse;
         }
