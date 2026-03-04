@@ -26,11 +26,19 @@ class User
     // =========================
     // Construtor
     // =========================
-    public function __construct($name, $email, $password, $foto = null)
-    {
+    public function __construct(
+        $name, 
+        $email, 
+        $password, 
+        $foto = null, 
+        bool $isHashed = false
+    ) {
         $this->name = $name;
         $this->email = $email;
-        $this->password = password_hash($password, PASSWORD_DEFAULT);
+        $this->password = $isHashed 
+            ? $password 
+            : password_hash($password, PASSWORD_DEFAULT);
+
         $this->foto = $foto;
         $this->createdAt = date('Y-m-d H:i:s');
     }
@@ -41,16 +49,18 @@ class User
     public function save()
     {
         if ($this->id === null) {
-            $sql = "INSERT INTO users (name, email, password, foto, created_at)
-                    VALUES (:name, :email, :password, :foto, :created_at)";
+            $sql = "INSERT INTO users 
+                    (user_name, user_email, user_password, user_foto, user_created_at)
+                    VALUES 
+                    (:user_name, :user_email, :user_password, :user_foto, :user_created_at)";
 
             $stmt = self::$pdo->prepare($sql);
             $stmt->execute([
-                ':name' => $this->name,
-                ':email' => $this->email,
-                ':password' => $this->password,
-                ':foto' => $this->foto,
-                ':created_at' => $this->createdAt
+                ':user_name' => $this->name,
+                ':user_email' => $this->email,
+                ':user_password' => $this->password,
+                ':user_foto' => $this->foto,
+                ':user_created_at' => $this->createdAt
             ]);
 
             $this->id = self::$pdo->lastInsertId();
@@ -65,8 +75,8 @@ class User
     // READ (por email)
     // ===============
     public static function findByEmail(string $email) {
-        $stmt = self::$pdo->prepare("SELECT * FROM users WHERE email = :email");
-        $stmt->execute([':email' => $email]);
+        $stmt = self::$pdo->prepare("SELECT * FROM users WHERE user_email = :user_email");
+        $stmt->execute([':user_email' => $email]);
 
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -75,14 +85,15 @@ class User
         }
 
         $user = new self(
-            $data['name'],
-            $data['email'],
-            $data['password'],
-            $data['foto']
+            $data['user_name'],
+            $data['user_email'],
+            $data['user_password'],
+            $data['user_foto'],
+            true // ← ESSENCIAL
         );
 
-        $user->id = $data['id'];
-        $user->createdAt = $data['created_at'];
+        $user->id = $data['user_id'];
+        $user->createdAt = $data['user_created_at'];
 
         return $user;
     }
@@ -92,8 +103,8 @@ class User
     // =========================
     public static function find(int $id)
     {
-        $stmt = self::$pdo->prepare("SELECT * FROM users WHERE id = :id");
-        $stmt->execute([':id' => $id]);
+        $stmt = self::$pdo->prepare("SELECT * FROM users WHERE user_id = :user_id");
+        $stmt->execute([':user_id' => $id]);
 
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -102,14 +113,15 @@ class User
         }
 
         $user = new self(
-            $data['name'],
-            $data['email'],
-            $data['password'],
-            $data['foto']
+            $data['user_name'],
+            $data['user_email'],
+            $data['user_password'],
+            $data['user_foto'],
+            true
         );
 
-        $user->id = $data['id'];
-        $user->createdAt = $data['created_at'];
+        $user->id = $data['user_id'];
+        $user->createdAt = $data['user_created_at'];
 
         return $user;
     }
@@ -137,18 +149,18 @@ class User
     private function update()
     {
         $sql = "UPDATE users 
-                SET name = :name,
-                    email = :email,
-                    foto = :foto
-                WHERE id = :id";
+                SET user_name = :user_name,
+                    user_email = :user_email,
+                    user_foto = :user_foto
+                WHERE user_id = :user_id";
 
         $stmt = self::$pdo->prepare($sql);
 
         $stmt->execute([
-            ':name' => $this->name,
-            ':email' => $this->email,
-            ':foto' => $this->foto,
-            ':id' => $this->id
+            ':user_name' => $this->name,
+            ':user_email' => $this->email,
+            ':user_foto' => $this->foto,
+            ':user_id' => $this->id
         ]);
     }
 
@@ -161,8 +173,24 @@ class User
             return false;
         }
 
-        $stmt = self::$pdo->prepare("DELETE FROM users WHERE id = :id");
-        return $stmt->execute([':id' => $this->id]);
+        $stmt = self::$pdo->prepare("DELETE FROM users WHERE user_id = :user_id");
+        return $stmt->execute([':user_id' => $this->id]);
+    }
+
+    public static function fromArray(array $data): self
+    {
+        $user = new self(
+            $data['user_name'],
+            $data['user_email'],
+            $data['user_password'],
+            $data['user_foto'],
+            true
+        );
+
+        $user->id = $data['user_id'];
+        $user->createdAt = $data['user_created_at'];
+
+        return $user;
     }
 
     // =========================
@@ -171,4 +199,5 @@ class User
     public function getId() { return $this->id; }
     public function getName() { return $this->name; }
     public function getEmail() { return $this->email; }
+    public function getPassword() {return $this->password;}
 }
