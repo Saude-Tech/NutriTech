@@ -3,13 +3,19 @@
 namespace App\Controllers;
 
 use App\Models\User;
+use Core\Auth;
 
 class AuthController
 {
-    public function index(): void
-    {
-        include __DIR__ . '/../views/auth/login.php';
+public function index(): void
+{
+    if (Auth::check()) {
+        header('Location: /nutritech/index');
+        exit;
     }
+
+    include __DIR__ . '/../views/auth/login.php';
+}
 
     public function login(): void
     {
